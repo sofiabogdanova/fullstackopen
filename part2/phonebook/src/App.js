@@ -24,13 +24,20 @@ const App = () => {
       name: newName,
       number: newNumber
     };
-    setPersons(persons.concat(person));
-    if (person.name.toLocaleLowerCase().startsWith(filteredValue.toLocaleLowerCase())) {
-      setFilteredPersons(filteredPersons.concat(person))
-    }
 
     setNewName('');
     setNewNumber('');
+    ////////
+    axios
+    .post('http://localhost:3001/persons', person)
+    .then(response => {
+      const createdPerson = response.data;
+      setPersons(persons.concat(createdPerson));
+      if (createdPerson.name.toLocaleLowerCase().startsWith(filteredValue.toLocaleLowerCase())) {
+        setFilteredPersons(filteredPersons.concat(createdPerson))
+      }
+      console.log(response)
+    })
   }
 
   const handleNameChange = (event) => {
