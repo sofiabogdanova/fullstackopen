@@ -1,43 +1,57 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
 
 import PersonForm from './components/personForm'
 import Persons from './components/persons'
 import SearchFilter from './components/searchFilter'
+import peopleService from './services/persons'
+import Notification from './components/notification'
+import './index.css'
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [filteredValue, setFilteredValue] = useState('');
-
   const [filteredPersons, setFilteredPersons] = useState([...persons]);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const addPerson = (event) => {
     event.preventDefault();
-    if (persons.map(p => p.name).includes(newName)) {
-      window.alert(`${newName} is already added to phonebook`);
+    const existingPersons = persons.filter(p => p.name === newName);
+    if(existingPersons.length>0){
+      const existingPerson = existingPersons[0];
+      if(window.confirm(replaceMessage(existingPerson.name))) {
+        const updatedPerson = {...existingPerson, number: newNumber};
+        peopleService.update(existingPerson.id, updatedPerson)
+          .then(updatedPerson => {
+            setPersons(persons.map(p => p.id !== existingPerson.id ? p : updatedPerson));
+            setFilteredPersons(filteredPersons.map(p => p.id !== existingPerson.id ? p : updatedPerson));
+          })
+          .catch(error => {
+            setErrorMessage(`Information of ${existingPerson.name} has already been removed from server.`);
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 5000)
+          });
+      }
       return;
     }
 
-    const person = {
-      name: newName,
-      number: newNumber
-    };
-
     setNewName('');
     setNewNumber('');
-    ////////
-    axios
-    .post('http://localhost:3001/persons', person)
-    .then(response => {
-      const createdPerson = response.data;
-      setPersons(persons.concat(createdPerson));
-      if (createdPerson.name.toLocaleLowerCase().startsWith(filteredValue.toLocaleLowerCase())) {
-        setFilteredPersons(filteredPersons.concat(createdPerson))
-      }
-      console.log(response)
-    })
+
+    peopleService.create({ name: newName, number: newNumber })
+      .then(createdPerson => {
+        setPersons(persons.concat(createdPerson));
+        if (createdPerson.name.toLocaleLowerCase().startsWith(filteredValue.toLocaleLowerCase())) {
+          setFilteredPersons(filteredPersons.concat(createdPerson))
+        }
+        setSuccessMessage(`Added ${newName}`);
+        setTimeout(() => {
+          setSuccessMessage(null)
+        }, 5000)
+      });
   }
 
   const handleNameChange = (event) => {
@@ -57,18 +71,29 @@ const App = () => {
     setFilteredValue(filterValue);
   }
 
-  useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
+  const deletePerson = (id) => {
+    peopleService.deletePerson(id)
       .then(response => {
-        setPersons(response.data)
-        setFilteredPersons(response.data)
+        setPersons(persons.filter(p => p.id !== id));
+        setFilteredPersons(filteredPersons.filter(p => p.id !== id));
+      }
+    );
+  }
+
+  useEffect(() => {
+    peopleService
+      .getAll()
+      .then(response => {
+        setPersons(response);
+        setFilteredPersons(response);
       })
   }, [])
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={successMessage} isError={false}/>
+      <Notification message={errorMessage} isError={true}/>
       <SearchFilter filteredValue={filteredValue} filteredValueChange={filteredValueChange} />
       <h3>Add a new</h3>
       <PersonForm
@@ -78,9 +103,13 @@ const App = () => {
         handleNumberChange={handleNumberChange}
         addPerson={addPerson} />
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons} />
+      <Persons filteredPersons={filteredPersons} deletePerson={deletePerson} />
     </div>
   )
+}
+
+const replaceMessage = (name) => {
+  return `${name} is already added to phonebook, replace the old number with a new one?`;
 }
 
 export default App
