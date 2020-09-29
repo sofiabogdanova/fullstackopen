@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import axios from 'axios'
 
 import '../countries.css'
 
-const Countries = ({ countries }) => {
+const Countries = ({countries}) => {
     return (
         <>
-            {countries.map(c => <BriefCountryInfo key={c.name} country={c} />)}
+            {countries.map(c => <BriefCountryInfo key={c.name} country={c}/>)}
         </>);
 }
 
-const BriefCountryInfo = ({ country }) => {
+const BriefCountryInfo = ({country}) => {
     const [showFullInfo, setShowFullInfo] = useState(false);
     const onShow = (country) => {
         const newShowFullInfo = !showFullInfo;
@@ -24,12 +24,12 @@ const BriefCountryInfo = ({ country }) => {
                 <button onClick={() => onShow(country)}>show</button>
             </div>
             {
-                showFullInfo && <FullCountryInfo country={country} />
+                showFullInfo && <FullCountryInfo country={country}/>
             }
         </>);
 }
 
-const FullCountryInfo = ({ country }) => {
+const FullCountryInfo = ({country}) => {
     const languages = country.languages.map((l) =>
         <li key={l.name}>{l.name}</li>
     );
@@ -43,13 +43,13 @@ const FullCountryInfo = ({ country }) => {
             <ul>
                 {languages}
             </ul>
-            <img src={country.flag} alt="Flag" width="100px" height="100px" />
-            <Weather capital={country.capital} />
+            <img src={country.flag} alt="Flag" width="100px" height="100px"/>
+            <Weather capital={country.capital}/>
         </>);
 }
 
 
-const Weather = ({ capital }) => {
+const Weather = ({capital}) => {
     const [weather, setWeather] = useState('');
 
     useEffect(() => {
@@ -66,7 +66,7 @@ const Weather = ({ capital }) => {
             <h2>Weather in {capital}</h2>
             <p>temperature: {weather.temperature}</p>
             {
-                weather.weather_icons && <img src={weather.weather_icons[0]} alt="Flag" width="50px" height="50px" />
+                weather.weather_icons && <img src={weather.weather_icons[0]} alt="Flag" width="50px" height="50px"/>
             }
             <p>wind: {weather.wind_degree} mph direction {weather.wind_dir}</p>
         </>
